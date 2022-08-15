@@ -153,9 +153,9 @@
                 let headHours = document.createElement('th');
                 let headBillable = document.createElement('th');
 
-                headName.style = "font-weight: 700; padding: 5px; vertical-align: top;";
-                headHours.style = "font-weight: 700; padding: 5px; vertical-align: top; text-align: right;";
-                headBillable.style = "font-weight: 700; padding: 5px; vertical-align: top; text-align: right;";
+                headName.style = "font-weight: 700; padding: 8px; vertical-align: top;";
+                headHours.style = "font-weight: 700; padding: 8px; vertical-align: top; text-align: right;";
+                headBillable.style = "font-weight: 700; padding: 8px; vertical-align: top; text-align: right;";
                 headerRow.style = "background: #F0F0F0;";
 
                 headName.innerHTML = "Project";
