@@ -1,14 +1,21 @@
 {
     "name": "better netsuite",
     "description": "Improvements for netsuite UI",
-    "version": "1.1",
+    "version": "1.3",
     "manifest_version": 3,
+    "permissions": [
+        "storage"
+    ],
 
-
-  "content_scripts": [{
-    "js": ["content.js"],
-    "css": ["styles.css"],
-    "matches": ["https://*.app.netsuite.com/*"]
-  }]
+    "content_scripts": [
+    {
+        "js": ["content.js"],
+        "css": ["styles.css"],
+        "matches": ["https://*.app.netsuite.com/*"]
+    },
+    {
+        "js": ["szamlazz.js"],
+        "matches": ["https://www.szamlazz.hu/szamla/?page=szamlaszerkeszto"]
+    }]
 
 }
