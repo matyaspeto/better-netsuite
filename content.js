@@ -3,9 +3,30 @@
     let summaryTable;
     let summaryTHead;
     let summaryTBody;
+    let invoiceVat;
+    let invoiceDialog;
+    let invoiceConfirm;
     let hourlyPrice = 0;
+
     const invoiceKey = "netsuite-invoice";
     const storageKey = "netsuite-hourly-price";
+
+
+    /**
+     * Trigger event listener on element
+     */
+    function trigger(element, event) {
+        var evt = document.createEvent("HTMLEvents");
+        evt.initEvent(event, false, true);
+        element.dispatchEvent(evt);
+    }
+
+    /**
+     * When VAT mode is changed in modal dialog
+     */
+    function onVatChange() {
+        invoiceConfirm.value = invoiceVat.value;
+    }
 
     /**
      * Get saved hourly fee from synced storage
@@ -71,11 +92,22 @@
         }
     }
 
-    function createInvoice() {
+    /**
+     * Save billing data to *not synced* storage and open create invoice form
+     */
+    function createInvoice(vat) {
         let obj = {};
         obj[invoiceKey] = getSum();
+        obj[invoiceKey].vat = vat;
         chrome.storage.local.set(obj);
         window.open("https://www.szamlazz.hu/szamla/?page=szamlaszerkeszto");
+    }
+
+    function createInvoiceModal() {
+        /**
+         * Save-reload last VAT value???
+         */
+        invoiceDialog.showModal();
     }
 
 
@@ -100,43 +132,94 @@
         } else {
 
             /**
-             * Custom table to DOM, to show stuff
+             * Init mode will run just once
              */
             if (init) {
+                /**
+                 * Custom table to DOM, to show stuff
+                 */
                 summaryTable = document.createElement('table');
                 summaryTHead = document.createElement('thead');
                 summaryTBody = document.createElement('tbody');
 
                 summaryTable.cellPadding = 5;
-                summaryTable.style = "margin: 20px auto; font-size: 16px; border: 1px solid #000; border-collapse: collapse;";
+                summaryTable.style = "margin: 20px auto; font-size: 16px; box-shadow: 0 0 15px rgba(0,0,0,.5); border-collapse: collapse;";
 
                 summaryTable.appendChild(summaryTHead);
                 summaryTable.appendChild(summaryTBody);
 
-                document.getElementById('div__body').prepend(summaryTable);
-
                 let headerRow = document.createElement('tr');
-                let heading_1 = document.createElement('th');
-                let heading_2 = document.createElement('th');
-                let heading_3 = document.createElement('th');
+                let headName = document.createElement('th');
+                let headHours = document.createElement('th');
+                let headBillable = document.createElement('th');
 
-                heading_1.style = "font-weight: 700; padding: 5px; vertical-align: top;";
-                heading_2.style = "font-weight: 700; padding: 5px; vertical-align: top; text-align: right;";
-                heading_3.style = "font-weight: 700; padding: 5px; vertical-align: top; text-align: right;";
+                headName.style = "font-weight: 700; padding: 5px; vertical-align: top;";
+                headHours.style = "font-weight: 700; padding: 5px; vertical-align: top; text-align: right;";
+                headBillable.style = "font-weight: 700; padding: 5px; vertical-align: top; text-align: right;";
                 headerRow.style = "background: #F0F0F0;";
 
-                heading_1.innerHTML = "Project";
-                heading_2.innerHTML = "Hours";
-                heading_3.innerHTML = `EUR/h<br><input id="netsuite-hourly-price" style="text-align: right; padding: 5px; width: 80px;" type="number" value="${hourlyPrice}">`;
+                headName.innerHTML = "Project";
+                headHours.innerHTML = "Hours";
+                headBillable.innerHTML = `EUR/h<br><input id="netsuite-hourly-price" style="text-align: right; padding: 5px; width: 80px;" type="number" value="${hourlyPrice}">`;
 
-                headerRow.appendChild(heading_1);
-                headerRow.appendChild(heading_2);
-                headerRow.appendChild(heading_3);
+                headerRow.appendChild(headName);
+                headerRow.appendChild(headHours);
+                headerRow.appendChild(headBillable);
                 summaryTHead.appendChild(headerRow);
 
+                document.getElementById('div__body').prepend(summaryTable);
                 document.getElementById("netsuite-hourly-price").addEventListener("keyup", onInputChange);
                 document.getElementById("netsuite-hourly-price").addEventListener("change", onInputChange);
+
+
+                /**
+                 * Create invoice dialog
+                 */
+                invoiceDialog = document.createElement('dialog');
+                // invoiceDialog.id = "invoiceDialog";
+                invoiceDialog.innerHTML = `
+                    <form method="dialog" id="invoice-dialog">
+                        <div class="wrapper">
+                            <h1>
+                                <label for="invoice-vat">Please select your VAT mode:</label>
+                            </h1>
+                            <select name="invoice-vat" id="invoice-vat">
+                                <option selected value="27.0">27%</option>
+                                <option value="-2.0">AAM</option>
+                                <option value="-10.0">TEHK</option>
+                            </select>
+                        </div>
+                        <div class="wrapper">
+                            If you click on Create invoice button, a new window will open with szamlazz.hu's Create invoice form
+                            and line items will be automatically created, based on this summary table.
+                            <br><br>
+                            In case you are not logged in currently please login then close the opened window & click on Create invoice button again.
+                        </div>
+                        <div class="footer">
+                            <button class="btn default" value="cancel">Cancel</button>
+                            <button class="btn" id="invoice-confirm">Create invoice</button>
+                        </div>
+                    </form>
+                `;
+                document.getElementsByTagName("body")[0].appendChild(invoiceDialog);
+
+                invoiceVat = document.getElementById("invoice-vat");
+                invoiceVat.addEventListener("change", onVatChange);
+                invoiceConfirm = document.getElementById("invoice-confirm")
+
+                /**
+                 * To process default selection
+                 */
+                trigger(invoiceVat, "change");
+
+                invoiceDialog.addEventListener('close', () => {
+                    if (invoiceDialog.returnValue && invoiceDialog.returnValue !== "cancel") {
+                        createInvoice(invoiceDialog.returnValue)
+                    }
+                });
             }
+
+
 
             /**
              * Clean up table body, in case we are just refresing...
@@ -192,15 +275,32 @@
                 sumHours.innerHTML = `Total:&nbsp;&nbsp;&nbsp;&nbsp; ${totalHours} h`;
 
                 let sumBillable = document.createElement('td');
-                sumBillable.style = "text-align: right; font-weight: 700; color: #FFF; cursor: pointer;"
+                sumBillable.style = "text-align: right; font-weight: 700; color: #FFF;"
                 sumBillable.innerHTML = `${totalBillable} €`;
-                sumBillable.addEventListener("click", createInvoice);
-
 
                 row.appendChild(sumHours);
                 row.appendChild(sumBillable);
-
                 summaryTBody.appendChild(row);
+
+                /**
+                 * TOTAL row
+                 */
+                let btnRow = document.createElement('tr');
+                btnRow.style="text-align: right;";
+
+                let btnCell = document.createElement('td');
+                btnCell.colSpan="3";
+
+                let btnInvoice = document.createElement('button');
+                btnInvoice.type="button";
+                btnInvoice.className="btn";
+                btnInvoice.innerHTML="Create invoice on szamlazz.hu";
+                btnInvoice.addEventListener("click", createInvoiceModal);
+
+                btnCell.appendChild(btnInvoice);
+                btnRow.appendChild(btnCell);
+                summaryTBody.appendChild(btnRow);
+
 
 
             } else {
@@ -212,7 +312,7 @@
 
                 let row_data_1 = document.createElement('td');
                 row_data_1.style = "padding: 20px;";
-                row_data_1.colSpan = "2"
+                row_data_1.colSpan = "3"
                 row_data_1.innerHTML = '<h1><center>Select "Report" in "Style" dropdown and "Actual Time" in "Type" dropdown!</center></h1>';
                 row.appendChild(row_data_1);
 

@@ -1,3 +1,56 @@
+#invoice-dialog {
+    font-size: 20px;
+}
+
+#invoice-dialog .footer{
+    text-align: right;
+}
+
+#invoice-dialog .wrapper{
+    margin-bottom: 10px;
+    border-bottom: 1px solid #000;
+    padding-bottom: 10px;
+
+    font-size: 14px;
+    max-width: 600px;
+}
+
+#invoice-dialog h1 {
+    margin-bottom: 5px;
+}
+
+button.btn {
+    margin: 0;
+    padding: 0 2.85714rem;
+    line-height: 2.85714rem;
+    color: #ffffff;
+    background: #ff6630;
+    border: none;
+    border-radius: 4px;
+    -webkit-transition: all 0.2s ease;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+button.btn.default {
+    color: #000;
+    background: rgba(0,0,0,.3);
+}
+
+button.btn:hover {
+    color: #ffffff;
+    background: #d55528;
+}
+
+#invoice-dialog select {
+    font-size: 16px;
+    width: 120px;
+}
+
+
+
+
+
 .n-w-text-area.n-widget .n-w-text-input.style-embedded 
 {
     width: 500px !important;

@@ -12,10 +12,12 @@
 
     function processStorage() {
         chrome.storage.local.get([invoiceKey], function(result) {
-            if (result[invoiceKey]) {
+            let invoiceData = result[invoiceKey];
 
-                let customers = result[invoiceKey].customers;
+            if (invoiceData) {
 
+                let vatCode = invoiceData.vat;
+                let customers = invoiceData.customers;
 
                 let deviza = document.getElementById("deviza");
                 deviza.value = "EUR";
@@ -36,21 +38,20 @@
 
                         var szIndex = index + 1;
 
-                        document.getElementsByName("item_" + szIndex)[0].value = customer;
-                        document.getElementsByName("menny_" + szIndex)[0].value = '1';
-                        document.getElementsByName("meegys_" + szIndex)[0].value = 'pc';
+                        document.getElementsByName(`item_${szIndex}`)[0].value = customer;
+                        document.getElementsByName(`menny_${szIndex}`)[0].value = '1';
+                        document.getElementsByName(`meegys_${szIndex}`)[0].value = 'pc';
 
-                        let billable = document.getElementsByName("nettegysar_" + szIndex)[0]
+                        let billable = document.getElementsByName(`nettegysar_${szIndex}`)[0]
                         billable.value = customers[customer].billable;
                         trigger(billable, "blur");
 
-
-                        // let vatDropdown = document.getElementsByName("afak_" + szIndex)[0];
-                        // vatDropdown.value = "27.0";
-                        // trigger(vatDropdown, "change");
+                        let vatDropdown = document.getElementsByName(`afak_${szIndex}`)[0];
+                        vatDropdown.value = vatCode;
+                        trigger(vatDropdown, "change");
 
                         /**
-                         * Add new line, if we are not on the last item already (1st item is present by default)
+                         * Add new line, if we are not on the last item already. 1st item is created by default.
                          */
                         if (index < Object.keys(customers).length - 1) {
                             var summaryRow = document.getElementById("inv-summary");
@@ -61,8 +62,10 @@
             }
         });
 
-
-        // chrome.storage.local.remove([invoiceKey]);
+        /**
+         * To not mess up the next pageload
+         */
+        chrome.storage.local.remove([invoiceKey]);
     }
 
 
