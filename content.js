@@ -193,10 +193,10 @@
                             If you click on Create invoice button, a new window will open with szamlazz.hu's Create invoice form
                             and line items will be automatically created, based on this summary table.
                             <br><br>
-                            In case you are not logged in currently please login then close the opened window & click on Create invoice button again.
+                            In case you are not logged in currently, then <strong>please log in</strong> then proceed to Create invoice form yourself or just close the window and click again on Create invoice button below.
                         </div>
                         <div class="footer">
-                            <button class="btn default" value="cancel">Cancel</button>
+                            <button class="btn default" value="cancel">Close</button>
                             <button class="btn" id="invoice-confirm">Create invoice</button>
                         </div>
                     </form>

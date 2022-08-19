@@ -73,7 +73,12 @@
      * Let some time for szamlazz.hu to load it's own stuff...
      */
     setTimeout(function() {
-        processStorage()
+        /**
+         * Process the stuff only if we are on the actual page
+         */
+        if (top.location.href == "https://www.szamlazz.hu/szamla/?page=szamlaszerkeszto" && document.getElementById("item_1")) {
+            processStorage()
+        }
     }, 500)
 
 
