@@ -55,7 +55,8 @@ button.btn:hover {
 
 
 
-.n-w-text-area.n-widget .n-w-text-input.style-embedded 
+.n-w-text-area.n-widget .n-w-text-input.style-embedded,
+.n-widget textarea.n-widget
 {
     width: 500px !important;
     height: 300px !important;
