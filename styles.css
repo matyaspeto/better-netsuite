@@ -1,12 +1,29 @@
+.netsuite-summary-table th,
+.netsuite-summary-table td {
+    padding: 5px;
+}
+
+.netsuite-summary-table th {
+    font-weight: 700;
+    vertical-align: top;
+}
+
+#netsuite-hourly-price,
+.netsuite-hourly-price {
+    text-align: right;
+    padding: 5px;
+    width: 80px;
+}
+
 #invoice-dialog {
     font-size: 20px;
 }
 
-#invoice-dialog .footer{
+#invoice-dialog .footer {
     text-align: right;
 }
 
-#invoice-dialog .wrapper{
+#invoice-dialog .wrapper {
     margin-bottom: 10px;
     border-bottom: 1px solid #000;
     padding-bottom: 10px;
@@ -38,7 +55,7 @@ button.btn {
 
 button.btn.default {
     color: #000;
-    background: rgba(0,0,0,.3);
+    background: rgba(0, 0, 0, .3);
 }
 
 button.btn:hover {
@@ -56,8 +73,7 @@ button.btn:hover {
 
 
 .n-w-text-area.n-widget .n-w-text-input.style-embedded,
-.n-widget textarea.n-widget
-{
+.n-widget textarea.n-widget {
     width: 500px !important;
     height: 300px !important;
 }

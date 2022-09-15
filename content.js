@@ -6,7 +6,8 @@
     let invoiceVat;
     let invoiceDialog;
     let invoiceConfirm;
-    let hourlyPrice = 0;
+    let hourlyPrices = {};
+    let createSummaryTimeout;
 
     const invoiceKey = "netsuite-invoice";
     const storageKey = "netsuite-hourly-price";
@@ -28,31 +29,69 @@
         invoiceConfirm.value = invoiceVat.value;
     }
 
+    function getHourlyPrice(project) {
+        if (typeof hourlyPrices[project] !== 'undefined') {
+            return hourlyPrices[project];
+
+        } else if (hourlyPrices["global"]) {
+
+            return hourlyPrices["global"];
+
+        } else {
+            return 0;
+
+        }
+    }
+
     /**
      * Get saved hourly fee from synced storage
      */
-    function getHourlyPrice() {
+    function syncHourlyPrices() {
         chrome.storage.sync.get([storageKey], function(result) {
-            hourlyPrice = result[storageKey];
+            try {
+                hourlyPrices = result[storageKey];
+                if (typeof(hourlyPrices) !== 'object') {
+                    hourlyPrices = {};
+                }
+            } catch (e) {
+                hourlyPrices = {};
+            }
         });
     }
 
     /**
      * Set hourly fee to synced storage
      */
-    function setHourlyPrice(hourlyPrice) {
+    function setHourlyPrices(value, project = "global") {
+
+        if (project == "global") {
+            hourlyPrices = {};
+        }
+
+        hourlyPrices[project] = value;
+
         let obj = {};
-        obj[storageKey] = hourlyPrice;
+        obj[storageKey] = hourlyPrices;
+
         chrome.storage.sync.set(obj);
     }
 
     /**
      * When hourly fee input changes
      */
-    function onInputChange(event) {
-        hourlyPrice = parseFloat(event.target.value) || 0;
-        setHourlyPrice(hourlyPrice);
-        createSummary();
+    function onInputChange(event, project) {
+        if ((event.which >= 48 && event.which <= 57) ||
+            (event.which >= 96 && event.which <= 105)
+        ) {
+            // hourlyPrices[project] = parseFloat(event.target.value) || 0;
+            setHourlyPrices(event.target.value, project);
+
+            if (createSummaryTimeout) {
+                clearTimeout(createSummaryTimeout);
+            }
+
+            createSummaryTimeout = setTimeout(createSummary, 300);
+        }
     };
 
     /**
@@ -61,7 +100,10 @@
     function getSum() {
         let list = document.getElementsByClassName('uir-list-row-tr');
         let total = 0;
+        let totalBillable = 0;
         let customers = {};
+
+        var lofasz = 0;
 
         for (let row of list) {
             let cust = row.cells[1].innerText
@@ -80,13 +122,19 @@
             customers[cust] = customers[cust] || {};
 
             customers[cust].name = cust;
-            customers[cust].hours = (customers[cust].hours || 0) + hours;
-            customers[cust].billable = (customers[cust].hours * hourlyPrice).toFixed(2);
+            customers[cust].hours = parseFloat((customers[cust].hours || 0) + hours);
+            customers[cust].billable = parseFloat((customers[cust].hours * (getHourlyPrice(cust)))).toFixed(2);
         }
+
+        Object.keys(customers).map((cust) => {
+            totalBillable += parseFloat(customers[cust].billable);
+        })
+
 
         return {
             total: total,
-            totalBillable: (total * hourlyPrice).toFixed(2),
+            totalBillable: parseFloat(totalBillable).toFixed(2),
+
             customers: customers,
             itemCount: list.length
         }
@@ -139,6 +187,7 @@
                  * Custom table to DOM, to show stuff
                  */
                 summaryTable = document.createElement('table');
+                summaryTable.className = "netsuite-summary-table";
                 summaryTHead = document.createElement('thead');
                 summaryTBody = document.createElement('tbody');
 
@@ -151,19 +200,22 @@
                 let headerRow = document.createElement('tr');
                 let headName = document.createElement('th');
                 let headHours = document.createElement('th');
+                let headEur = document.createElement('th');
                 let headBillable = document.createElement('th');
 
-                headName.style = "font-weight: 700; padding: 8px; vertical-align: top;";
-                headHours.style = "font-weight: 700; padding: 8px; vertical-align: top; text-align: right;";
-                headBillable.style = "font-weight: 700; padding: 8px; vertical-align: top; text-align: right;";
+                headHours.style = "text-align: right;";
+                headEur.style = "text-align: right;";
+                headBillable.style = "text-align: right;";
                 headerRow.style = "background: #F0F0F0;";
 
                 headName.innerHTML = "Project";
                 headHours.innerHTML = "Hours";
-                headBillable.innerHTML = `EUR/h<br><input id="netsuite-hourly-price" style="text-align: right; padding: 5px; width: 80px;" type="number" value="${hourlyPrice}">`;
+                headEur.innerHTML = `EUR/h<br><input id="netsuite-hourly-price" type="number" value="${getHourlyPrice("global")}">`;
+                headBillable.innerHTML = 'Billable';
 
                 headerRow.appendChild(headName);
                 headerRow.appendChild(headHours);
+                headerRow.appendChild(headEur);
                 headerRow.appendChild(headBillable);
                 summaryTHead.appendChild(headerRow);
 
@@ -247,12 +299,39 @@
                         projectHours.innerHTML = customers[customer].hours;
                         projectHours.style = "text-align: right;"
 
+
+                        /**
+                         * projectEur INPUT START
+                         */
+                        let projectEurInput = document.createElement('input');
+                        projectEurInput.className = "netsuite-hourly-price";
+                        projectEurInput.type = "number";
+                        projectEurInput.value = getHourlyPrice(customer);
+                        projectEurInput.addEventListener("keyup", function(event) {
+                            onInputChange(event, customer);
+                        });
+                        projectEurInput.addEventListener("change", function(event) {
+                            onInputChange(event, customer);
+                        });
+
+                        // type="number"
+
+                        let projectEur = document.createElement('td');
+                        projectEur.appendChild(projectEurInput);
+                        projectEur.style = "text-align: right;"
+                        /**
+                         * projectEur INPUT END
+                         */
+
+
                         let projectBillable = document.createElement('td');
                         projectBillable.innerHTML = customers[customer].billable;
                         projectBillable.style = "text-align: right;";
 
                         row.appendChild(projectName);
                         row.appendChild(projectHours);
+                        row.appendChild(projectEur);
+
                         row.appendChild(projectBillable);
 
                         if (index % 2) {
@@ -274,11 +353,14 @@
                 sumHours.colSpan = 2;
                 sumHours.innerHTML = `Total:&nbsp;&nbsp;&nbsp;&nbsp; ${totalHours} h`;
 
+                let sumEur = document.createElement('td'); // dummy
+
                 let sumBillable = document.createElement('td');
                 sumBillable.style = "text-align: right; font-weight: 700; color: #FFF;"
                 sumBillable.innerHTML = `${totalBillable} €`;
 
                 row.appendChild(sumHours);
+                row.appendChild(sumEur);
                 row.appendChild(sumBillable);
                 summaryTBody.appendChild(row);
 
@@ -286,15 +368,15 @@
                  * TOTAL row
                  */
                 let btnRow = document.createElement('tr');
-                btnRow.style="text-align: right;";
+                btnRow.style = "text-align: right;";
 
                 let btnCell = document.createElement('td');
-                btnCell.colSpan="3";
+                btnCell.colSpan = "4";
 
                 let btnInvoice = document.createElement('button');
-                btnInvoice.type="button";
-                btnInvoice.className="btn";
-                btnInvoice.innerHTML="Create invoice on szamlazz.hu";
+                btnInvoice.type = "button";
+                btnInvoice.className = "btn";
+                btnInvoice.innerHTML = "Create invoice on szamlazz.hu";
                 btnInvoice.addEventListener("click", createInvoiceModal);
 
                 btnCell.appendChild(btnInvoice);
@@ -325,7 +407,7 @@
     /**
      * Init sequence
      */
-    getHourlyPrice();
+    syncHourlyPrices();
     setTimeout(function() {
         createSummary(true)
     }, 1000)
