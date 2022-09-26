@@ -39,12 +39,12 @@
                         var szIndex = index + 1;
 
                         document.getElementsByName(`item_${szIndex}`)[0].value = customer;
-                        document.getElementsByName(`menny_${szIndex}`)[0].value = '1';
-                        document.getElementsByName(`meegys_${szIndex}`)[0].value = 'pc';
+                        document.getElementsByName(`menny_${szIndex}`)[0].value = customers[customer].hours;
+                        document.getElementsByName(`meegys_${szIndex}`)[0].value = 'hours';
 
-                        let billable = document.getElementsByName(`nettegysar_${szIndex}`)[0]
-                        billable.value = customers[customer].billable;
-                        trigger(billable, "blur");
+                        let price = document.getElementsByName(`nettegysar_${szIndex}`)[0]
+                        price.value = customers[customer].hourly;
+                        trigger(price, "blur");
 
                         let vatDropdown = document.getElementsByName(`afak_${szIndex}`)[0];
                         vatDropdown.value = vatCode;

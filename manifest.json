@@ -1,7 +1,7 @@
 {
     "name": "better netsuite",
     "description": "Improvements for netsuite UI",
-    "version": "1.5",
+    "version": "1.6",
     "manifest_version": 3,
     "permissions": [
         "storage"

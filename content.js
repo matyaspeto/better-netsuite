@@ -123,7 +123,8 @@
 
             customers[cust].name = cust;
             customers[cust].hours = parseFloat((customers[cust].hours || 0) + hours);
-            customers[cust].billable = parseFloat((customers[cust].hours * (getHourlyPrice(cust)))).toFixed(2);
+            customers[cust].hourly = getHourlyPrice(cust);
+            customers[cust].billable = parseFloat(customers[cust].hours * customers[cust].hourly).toFixed(2);
         }
 
         Object.keys(customers).map((cust) => {
